@@ -113,18 +113,22 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(24px, 5vw, 48px);
+            font-size: clamp(32px, 6vw, 56px);
             cursor: pointer;
             transition: all 0.2s;
             user-select: none;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            font-weight: 600;
         }
         
         .square.light {
-            background: rgba(255, 255, 255, 0.9);
+            background: #f0d9b5;
+            color: #333;
         }
         
         .square.dark {
-            background: rgba(153, 69, 255, 0.3);
+            background: #b58863;
+            color: #fff;
         }
         
         .square.selected {
