@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Henri & Kibo Chess | Solana Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --solana-purple: #9945FF;
+            --solana-green: #14F195;
+            --dark: #0a0a1a;
+            --darker: #050510;
+        }
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, var(--darker) 0%, #1a0a2e 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: clamp(28px, 5vw, 56px);
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            font-weight: 700;
+        }
+        
+        .subtitle {
+            color: #b0b0c8;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: clamp(14px, 2vw, 18px);
+        }
+        
+        .game-container {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .players {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        .player {
+            flex: 1;
+            background: rgba(153, 69, 255, 0.1);
+            border: 2px solid var(--solana-purple);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .player.active {
+            border-color: var(--solana-green);
+            box-shadow: 0 0 30px rgba(20, 241, 149, 0.5);
+            transform: scale(1.05);
+        }
+        
+        .player-name {
+            font-weight: 700;
+            font-size: clamp(18px, 3vw, 24px);
+            margin-bottom: 5px;
+        }
+        
+        .player-color {
+            font-size: clamp(12px, 2vw, 14px);
+            color: #b0b0c8;
+        }
+        
+        .board-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            margin: 0 auto;
+        }
+        
+        .chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 0;
+            border: 4px solid var(--solana-purple);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(153, 69, 255, 0.4);
+            width: 100%;
+            height: 100%;
+        }
+        
+        .square {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(24px, 5vw, 48px);
+            cursor: pointer;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        
+        .square.light {
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .square.dark {
+            background: rgba(153, 69, 255, 0.3);
+        }
+        
+        .square.selected {
+            background: var(--solana-green) !important;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .square.valid-move {
+            background: rgba(20, 241, 149, 0.5) !important;
+        }
+        
+        .square.valid-move::after {
+            content: '●';
+            color: var(--solana-green);
+            font-size: 20px;
+            position: absolute;
+        }
+        
+        .square:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+        
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(153, 69, 255, 0.1);
+            border: 2px solid var(--solana-purple);
+            border-radius: 10px;
+            font-size: clamp(14px, 2.5vw, 18px);
+            font-weight: 600;
+        }
+        
+        .reset-btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, var(--solana-purple), var(--solana-green));
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: clamp(16px, 2.5vw, 20px);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(153, 69, 255, 0.5);
+        }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .players {
+                flex-direction: column;
+            }
+            
+            .player {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>♔ Henri vs Kibo ♚</h1>
+    <p class="subtitle">Solana Chess Challenge</p>
+    
+    <div class="game-container">
+        <div class="players">
+            <div class="player active" id="player1">
+                <div class="player-name">Henri</div>
+                <div class="player-color">⚪ Blancs</div>
+            </div>
+            <div class="player" id="player2">
+                <div class="player-name">Kibo</div>
+                <div class="player-color">⚫ Noirs</div>
+            </div>
+        </div>
+        
+        <div class="board-container">
+            <div class="chessboard" id="chessboard"></div>
+        </div>
+        
+        <div class="status" id="status">Tour de Henri (Blancs)</div>
+        
+        <button class="reset-btn" onclick="resetGame()">🔄 Nouvelle Partie</button>
+    </div>
+
+    <script>
+        // Chess pieces in Unicode
+        const pieces = {
+            white: {
+                king: '♔',
+                queen: '♕',
+                rook: '♖',
+                bishop: '♗',
+                knight: '♘',
+                pawn: '♙'
+            },
+            black: {
+                king: '♚',
+                queen: '♛',
+                rook: '♜',
+                bishop: '♝',
+                knight: '♞',
+                pawn: '♟'
+            }
+        };
+
+        // Initial board setup
+        const initialBoard = [
+            ['♜', '♞', '♝', '♛', '♚', '♝', '♞', '♜'],
+            ['♟', '♟', '♟', '♟', '♟', '♟', '♟', '♟'],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['', '', '', '', '', '', '', ''],
+            ['♙', '♙', '♙', '♙', '♙', '♙', '♙', '♙'],
+            ['♖', '♘', '♗', '♕', '♔', '♗', '♘', '♖']
+        ];
+
+        let board = JSON.parse(JSON.stringify(initialBoard));
+        let currentPlayer = 'white';
+        let selectedSquare = null;
+        let validMoves = [];
+
+        function createBoard() {
+            const chessboard = document.getElementById('chessboard');
+            chessboard.innerHTML = '';
+            
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement('div');
+                    square.className = 'square ' + ((row + col) % 2 === 0 ? 'light' : 'dark');
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    square.textContent = board[row][col];
+                    square.onclick = () => handleSquareClick(row, col);
+                    chessboard.appendChild(square);
+                }
+            }
+        }
+
+        function handleSquareClick(row, col) {
+            const piece = board[row][col];
+            const isWhitePiece = Object.values(pieces.white).includes(piece);
+            const isBlackPiece = Object.values(pieces.black).includes(piece);
+            
+            // Clear previous highlights
+            document.querySelectorAll('.square').forEach(sq => {
+                sq.classList.remove('selected', 'valid-move');
+            });
+            
+            // If clicking on own piece
+            if ((currentPlayer === 'white' && isWhitePiece) || 
+                (currentPlayer === 'black' && isBlackPiece)) {
+                selectedSquare = {row, col};
+                document.querySelector(`[data-row="${row}"][data-col="${col}"]`).classList.add('selected');
+                validMoves = getValidMoves(row, col, piece);
+                
+                // Highlight valid moves
+                validMoves.forEach(move => {
+                    const sq = document.querySelector(`[data-row="${move.row}"][data-col="${move.col}"]`);
+                    sq.classList.add('valid-move');
+                });
+            }
+            // If moving selected piece
+            else if (selectedSquare && validMoves.some(m => m.row === row && m.col === col)) {
+                movePiece(selectedSquare.row, selectedSquare.col, row, col);
+                selectedSquare = null;
+                validMoves = [];
+                switchPlayer();
+                createBoard();
+                updateStatus();
+            }
+        }
+
+        function getValidMoves(row, col, piece) {
+            const moves = [];
+            const isPawn = piece === '♙' || piece === '♟';
+            const isRook = piece === '♖' || piece === '♜';
+            const isBishop = piece === '♗' || piece === '♝';
+            const isQueen = piece === '♕' || piece === '♛';
+            const isKnight = piece === '♘' || piece === '♞';
+            const isKing = piece === '♔' || piece === '♚';
+            const isWhite = Object.values(pieces.white).includes(piece);
+            
+            // Simplified move validation (basic rules)
+            if (isPawn) {
+                const direction = isWhite ? -1 : 1;
+                const startRow = isWhite ? 6 : 1;
+                
+                // Forward move
+                if (board[row + direction]?.[col] === '') {
+                    moves.push({row: row + direction, col});
+                    // Double move from start
+                    if (row === startRow && board[row + 2 * direction]?.[col] === '') {
+                        moves.push({row: row + 2 * direction, col});
+                    }
+                }
+                
+                // Capture diagonally
+                [-1, 1].forEach(dc => {
+                    const newRow = row + direction;
+                    const newCol = col + dc;
+                    const targetPiece = board[newRow]?.[newCol];
+                    if (targetPiece && isOpponentPiece(targetPiece, isWhite)) {
+                        moves.push({row: newRow, col: newCol});
+                    }
+                });
+            }
+            
+            if (isKnight) {
+                const knightMoves = [
+                    [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+                    [1, -2], [1, 2], [2, -1], [2, 1]
+                ];
+                knightMoves.forEach(([dr, dc]) => {
+                    const newRow = row + dr;
+                    const newCol = col + dc;
+                    if (isValidSquare(newRow, newCol, isWhite)) {
+                        moves.push({row: newRow, col: newCol});
+                    }
+                });
+            }
+            
+            if (isRook || isQueen) {
+                // Horizontal and vertical
+                [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dr, dc]) => {
+                    addLineMoves(moves, row, col, dr, dc, isWhite);
+                });
+            }
+            
+            if (isBishop || isQueen) {
+                // Diagonals
+                [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([dr, dc]) => {
+                    addLineMoves(moves, row, col, dr, dc, isWhite);
+                });
+            }
+            
+            if (isKing) {
+                [-1, 0, 1].forEach(dr => {
+                    [-1, 0, 1].forEach(dc => {
+                        if (dr !== 0 || dc !== 0) {
+                            const newRow = row + dr;
+                            const newCol = col + dc;
+                            if (isValidSquare(newRow, newCol, isWhite)) {
+                                moves.push({row: newRow, col: newCol});
+                            }
+                        }
+                    });
+                });
+            }
+            
+            return moves;
+        }
+
+        function addLineMoves(moves, row, col, dr, dc, isWhite) {
+            let newRow = row + dr;
+            let newCol = col + dc;
+            
+            while (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                const targetPiece = board[newRow][newCol];
+                
+                if (targetPiece === '') {
+                    moves.push({row: newRow, col: newCol});
+                } else {
+                    if (isOpponentPiece(targetPiece, isWhite)) {
+                        moves.push({row: newRow, col: newCol});
+                    }
+                    break;
+                }
+                
+                newRow += dr;
+                newCol += dc;
+            }
+        }
+
+        function isValidSquare(row, col, isWhite) {
+            if (row < 0 || row >= 8 || col < 0 || col >= 8) return false;
+            const targetPiece = board[row][col];
+            return targetPiece === '' || isOpponentPiece(targetPiece, isWhite);
+        }
+
+        function isOpponentPiece(piece, isWhite) {
+            return isWhite ? 
+                Object.values(pieces.black).includes(piece) :
+                Object.values(pieces.white).includes(piece);
+        }
+
+        function movePiece(fromRow, fromCol, toRow, toCol) {
+            board[toRow][toCol] = board[fromRow][fromCol];
+            board[fromRow][fromCol] = '';
+        }
+
+        function switchPlayer() {
+            currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+            document.getElementById('player1').classList.toggle('active');
+            document.getElementById('player2').classList.toggle('active');
+        }
+
+        function updateStatus() {
+            const playerName = currentPlayer === 'white' ? 'Henri' : 'Kibo';
+            const color = currentPlayer === 'white' ? 'Blancs' : 'Noirs';
+            document.getElementById('status').textContent = `Tour de ${playerName} (${color})`;
+        }
+
+        function resetGame() {
+            board = JSON.parse(JSON.stringify(initialBoard));
+            currentPlayer = 'white';
+            selectedSquare = null;
+            validMoves = [];
+            
+            document.getElementById('player1').classList.add('active');
+            document.getElementById('player2').classList.remove('active');
+            
+            createBoard();
+            updateStatus();
+        }
+
+        // Initialize game
+        createBoard();
+    </script>
+</body>
+</html>
